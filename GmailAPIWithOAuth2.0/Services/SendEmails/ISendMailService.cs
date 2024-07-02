@@ -20,8 +20,10 @@
 
         ISendMailService ReplyTo(string address, string displayName = null);
 
-        ISendMailService Body(string bodyContent);
+        ISendMailService Body(string bodyContent, bool isHtml = false);
 
-        ISendMailService Header(string key, string value);
+        ISendMailService BodyFromFile(string filePath, bool isHtml = false);
+
+		ISendMailService Header(string key, string value);
     }
 }

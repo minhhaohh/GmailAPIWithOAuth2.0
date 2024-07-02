@@ -1,9 +1,10 @@
-﻿using MimeKit;
-using GmailAPIWithOAuth2.Models;
+﻿using GmailAPIWithOAuth2.Models;
+using MimeKit;
+using System.Text;
 
 namespace GmailAPIWithOAuth2.Services.SendEmails
 {
-    public class SmtpOAuth2MailService : ISendMailService
+	public class SmtpOAuth2MailService : ISendMailService
     {
         SmtpContext _context;
         MimeMessage _currentMessage;
@@ -13,7 +14,7 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             _context = context;
         }
 
-        public void Send()
+		public virtual void Send()
         {
             if (_currentMessage == null)
                 throw new NullReferenceException("Mail message is not initialized.");
@@ -27,7 +28,7 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             _currentMessage = null;
         }
 
-        public async Task SendAsync()
+		public virtual async Task SendAsync()
         {
             if (_currentMessage == null)
                 throw new NullReferenceException("Mail message is not initialized.");
@@ -41,56 +42,78 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             _currentMessage = null;
         }
 
-        public ISendMailService New()
+		public virtual ISendMailService New()
         {
             _currentMessage = new MimeMessage();
 
             return this;
         }
 
-        public ISendMailService Subject(string subject)
+		public virtual ISendMailService Subject(string subject)
         {
             _currentMessage.Subject = subject;
             return this;
         }
 
-        public ISendMailService From(string senderAddress, string senderName = null)
+		public virtual ISendMailService From(string senderAddress, string senderName = null)
         {
             _currentMessage.From.Add(new MailboxAddress(senderName, senderAddress));
             return this;
         }
 
-        public ISendMailService To(string address, string displayName = null)
+		public virtual ISendMailService To(string address, string displayName = null)
         {
             _currentMessage.To.Add(new MailboxAddress(displayName, address));
             return this;
         }
 
-        public ISendMailService Cc(string address, string displayName = null)
+		public virtual ISendMailService Cc(string address, string displayName = null)
         {
             _currentMessage.Cc.Add(new MailboxAddress(displayName, address));
             return this;
         }
 
-        public ISendMailService Bcc(string address, string displayName = null)
+		public virtual ISendMailService Bcc(string address, string displayName = null)
         {
             _currentMessage.Bcc.Add(new MailboxAddress(displayName, address));
             return this;
         }
 
-        public ISendMailService ReplyTo(string address, string displayName = null)
+		public virtual ISendMailService ReplyTo(string address, string displayName = null)
         {
             _currentMessage.ReplyTo.Add(new MailboxAddress(displayName, address));
             return this;
         }
 
-        public ISendMailService Body(string bodyContent)
+        public virtual ISendMailService Body(string bodyContent, bool isHtml = false)
         {
-            _currentMessage.Body = new TextPart("plain") { Text = bodyContent };
+			_currentMessage.Body = isHtml
+                ? new TextPart("html") { Text = bodyContent }
+                : new TextPart("plain") { Text = bodyContent };
             return this;
         }
 
-        public ISendMailService Header(string key, string value)
+		public virtual ISendMailService BodyFromFile(string filePath, bool isHtml = false)
+		{
+			StreamReader sr;
+
+			if (filePath.ToLower().StartsWith("http"))
+			{
+				var client = new HttpClient();
+				sr = new StreamReader(client.GetStreamAsync(filePath).Result);
+			}
+			else
+			{
+				sr = new StreamReader(filePath, Encoding.Default);
+			}
+
+			_currentMessage.Body = new TextPart("html") { Text = sr.ReadToEnd() };
+			sr.Close();
+
+			return this;
+		}
+
+		public virtual ISendMailService Header(string key, string value)
         {
             _currentMessage.Headers.Add(key, value);
             return this;

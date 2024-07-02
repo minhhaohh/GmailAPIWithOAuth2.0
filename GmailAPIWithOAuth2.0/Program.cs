@@ -52,11 +52,11 @@ namespace GmailAPIWithOAuth2
 				.AddJsonFile("appsettings.mailing.json", false)
 				.Build();
 
-			// Update values from environment variables to configuration
-			Configuration["MailOptions:GmailSmtp:Username"] = clientId;
-			Configuration["MailOptions:GmailSmtp:Password"] = clientSecret;
-			Configuration["MailOptions:GmailImap:Username"] = clientId;
-			Configuration["MailOptions:GmailImap:Password"] = clientSecret;
+			// Update values to configuration
+			Configuration["MailOptions:GmailSmtp:ClientID"] = clientId;
+			Configuration["MailOptions:GmailSmtp:ClientSecret"] = clientSecret;
+			Configuration["MailOptions:GmailImap:ClientID"] = clientId;
+			Configuration["MailOptions:GmailImap:ClientSecret"] = clientSecret;
 
 			var services = new ServiceCollection();
 

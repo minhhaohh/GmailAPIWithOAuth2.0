@@ -14,7 +14,9 @@ namespace GmailAPIWithOAuth2.Models
 
 		public string Password { get; set; }
 
-		public string Email { get; set; }
+		public string ClientID { get; set; }
+
+		public string ClientSecret { get; set; }
 
 		public bool EnableSsl { get; set; }
 
@@ -29,9 +31,9 @@ namespace GmailAPIWithOAuth2.Models
 
 			// Authorize and get credentials
 			var credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-				new ClientSecrets() { ClientId = Username, ClientSecret = Password },
+				new ClientSecrets() { ClientId = ClientID, ClientSecret = ClientSecret },
 				scopes,
-				Email,
+				Username,
 				CancellationToken.None).Result;
 
 			// Check if access token is expired and refresh if necessary
@@ -41,7 +43,7 @@ namespace GmailAPIWithOAuth2.Models
 			}
 
 			// Create an OAuth2 authentication mechanism using the email address and the access token obtained from the Google credentials.
-			var oauth2 = new SaslMechanismOAuth2(Email, credential.Token.AccessToken);
+			var oauth2 = new SaslMechanismOAuth2(Username, credential.Token.AccessToken);
 			smtpClient.Authenticate(oauth2);
 
 			return smtpClient;
