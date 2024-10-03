@@ -1,13 +1,15 @@
-﻿using GmailAPIWithOAuth2.Models;
+﻿using FluentEmail.Core;
+using GmailAPIWithOAuth2.Models;
 using MimeKit;
 using System.Text;
 
 namespace GmailAPIWithOAuth2.Services.SendEmails
 {
-	public class SmtpOAuth2MailService : ISendMailService
+    public class SmtpOAuth2MailService : ISendMailService
     {
         SmtpContext _context;
         MimeMessage _currentMessage;
+        BodyBuilder _bodyBuilder;
 
         public SmtpOAuth2MailService(SmtpContext context)
         {
@@ -19,6 +21,9 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             if (_currentMessage == null)
                 throw new NullReferenceException("Mail message is not initialized.");
 
+            if (_bodyBuilder != null)
+                _currentMessage.Body = _bodyBuilder.ToMessageBody();
+
             using (var client = _context.CreateSmtpClient())
             {
                 client.Send(_currentMessage);
@@ -26,12 +31,16 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             }
 
             _currentMessage = null;
+            _bodyBuilder = null;
         }
 
 		public virtual async Task SendAsync()
         {
             if (_currentMessage == null)
                 throw new NullReferenceException("Mail message is not initialized.");
+
+            if (_bodyBuilder != null)
+                _currentMessage.Body = _bodyBuilder.ToMessageBody();
 
             using (var client = _context.CreateSmtpClient())
             {
@@ -40,11 +49,13 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             }
 
             _currentMessage = null;
+            _bodyBuilder = null;
         }
 
 		public virtual ISendMailService New()
         {
             _currentMessage = new MimeMessage();
+            _bodyBuilder = new BodyBuilder();
 
             return this;
         }
@@ -87,9 +98,11 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
 
         public virtual ISendMailService Body(string bodyContent, bool isHtml = false)
         {
-			_currentMessage.Body = isHtml
-                ? new TextPart("html") { Text = bodyContent }
-                : new TextPart("plain") { Text = bodyContent };
+            if (isHtml) 
+                _bodyBuilder.HtmlBody = bodyContent;
+            else
+                _bodyBuilder.TextBody = bodyContent;
+            
             return this;
         }
 
@@ -107,7 +120,11 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
 				sr = new StreamReader(filePath, Encoding.Default);
 			}
 
-			_currentMessage.Body = new TextPart("html") { Text = sr.ReadToEnd() };
+            if (isHtml)
+                _bodyBuilder.HtmlBody = sr.ReadToEnd();
+            else
+                _bodyBuilder.TextBody = sr.ReadToEnd();
+
 			sr.Close();
 
 			return this;
@@ -116,6 +133,28 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
 		public virtual ISendMailService Header(string key, string value)
         {
             _currentMessage.Headers.Add(key, value);
+            return this;
+        }
+
+        public virtual ISendMailService AddAttachment(string filePath, string name = null)
+        {
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return this;
+
+            var fileName = string.IsNullOrWhiteSpace(name) ? Path.GetFileName(filePath) : name;
+            var fileAsBytes = File.ReadAllBytes(filePath);
+
+            _bodyBuilder.Attachments.Add(fileName, fileAsBytes);
+
+            return this;
+        }
+
+        public virtual ISendMailService UsingTemplate<T>(string template, T model, bool isHtml = true)
+        {
+            return this;
+        }
+
+        public virtual ISendMailService UsingTemplateFromFile<T>(string filePath, T model, bool isHtml = true)
+        {
             return this;
         }
     }

@@ -12,7 +12,7 @@ namespace GmailAPIWithOAuth2.Models
 
 		public string Username { get; set; }
 
-		public string ClientID { get; set; }
+		public string ClientId { get; set; }
 
 		public string ClientSecret { get; set; }
 
@@ -29,7 +29,7 @@ namespace GmailAPIWithOAuth2.Models
 
 			// Authorize and get credentials
 			var credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-				new ClientSecrets() { ClientId = ClientID, ClientSecret = ClientSecret },
+				new ClientSecrets() { ClientId = ClientId, ClientSecret = ClientSecret },
 				scopes,
 				Username,
 				CancellationToken.None).Result;

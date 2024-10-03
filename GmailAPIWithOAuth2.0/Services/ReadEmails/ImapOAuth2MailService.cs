@@ -2,6 +2,10 @@
 using MailKit.Search;
 using MimeKit;
 using GmailAPIWithOAuth2.Models;
+using GmailAPIWithOAuth2.Extentions;
+using MailKit.Net.Imap;
+using Google.Apis.Auth.OAuth2;
+using MailKit.Security;
 
 namespace GmailAPIWithOAuth2.Services.ReadEmails
 {
@@ -9,7 +13,7 @@ namespace GmailAPIWithOAuth2.Services.ReadEmails
 	{
         ImapContext _context;
 
-        public ImapOAuth2MailService(ImapContext context)
+		public ImapOAuth2MailService(ImapContext context)
         {
             _context = context;
         }

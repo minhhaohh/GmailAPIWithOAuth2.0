@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using GmailAPIWithOAuth2.Extentions;
 using GmailAPIWithOAuth2.Models;
 using GmailAPIWithOAuth2.Services.ReadEmails;
 using GmailAPIWithOAuth2.Services.SendEmails;
-using DotNetEnv;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GmailAPIWithOAuth2
 {
@@ -21,17 +21,22 @@ namespace GmailAPIWithOAuth2
 				var sendMailFactory = serviceProvider.GetRequiredService<ISendMailServiceFactory>();
 				var readMailFactory = serviceProvider.GetRequiredService<IReadMailServiceFactory>();
 
-				var sendMailService = sendMailFactory.Create();
-
-				await sendMailService.New()
-					.From("minhhao.hh00@gmail.com", "Minh Hao")
-					.To("hao.tran@devsoft.vn", "Hao Tran")
+				var sendMailService = sendMailFactory.CreateSendMailService();
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Templates", "TestTemplate.liquid");
+                var model = new Person()
+                {
+                    Name = "Hao Tran",
+                    Dob = new DateTime(2000, 12, 4),
+                    Gender = "Male",
+                    Address = "Ho Chi Minh city"
+                };
+                await sendMailService.New()
+					.From("haotrandevsoft@gmail.com", "Hao Tran")
+					.To("hao.tran@devsoft.vn", "Minh Hao")
 					.Subject("TEST EMAIL SUBJECT")
-					.Body("TEST EMAIL BODY")
+					.UsingTemplateFromFile(filePath, model)
 					.SendAsync();
 
-				var readMailService = readMailFactory.Create();
-				await readMailService.GetEmailIdsAsync();
 			}
 			catch (Exception ex)
 			{
@@ -41,22 +46,9 @@ namespace GmailAPIWithOAuth2
 
 		private static ServiceCollection ConfigureServices()
 		{
-			// Load environment variables from .env
-			Env.Load();
-
-			// Get values from environment variables
-			var clientId = Environment.GetEnvironmentVariable("CLIENT_ID");
-			var clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET");
-
 			Configuration = new ConfigurationBuilder()
 				.AddJsonFile("appsettings.mailing.json", false)
 				.Build();
-
-			// Update values to configuration
-			Configuration["MailOptions:GmailSmtp:ClientID"] = clientId;
-			Configuration["MailOptions:GmailSmtp:ClientSecret"] = clientSecret;
-			Configuration["MailOptions:GmailImap:ClientID"] = clientId;
-			Configuration["MailOptions:GmailImap:ClientSecret"] = clientSecret;
 
 			var services = new ServiceCollection();
 
@@ -64,6 +56,13 @@ namespace GmailAPIWithOAuth2
 
 			services.AddSingleton<ISendMailServiceFactory, SendMailServiceFactory>();
 			services.AddSingleton<IReadMailServiceFactory, ReadMailServiceFactory>();
+
+			var mailOptions = Configuration.GetSection(nameof(MailOptions)).Get<MailOptions>();
+
+            // Add Fluent Email
+            services.AddFluentEmail(mailOptions.GmailSmtp.Username)
+				.AddOAuth2MailKitSender(mailOptions.GmailSmtp)
+				.AddLiquidRenderer();
 
 			return services;
 		}

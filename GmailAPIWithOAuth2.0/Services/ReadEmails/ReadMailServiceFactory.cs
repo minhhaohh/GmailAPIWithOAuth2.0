@@ -12,11 +12,11 @@ namespace GmailAPIWithOAuth2.Services.ReadEmails
             _mailOptions = mailOptions.Value;
         }
 
-        public IReadMailService Create()
+        public IReadMailService CreateReadMailService()
         {
-            return CreateImapClient(_mailOptions.GmailImap);
+            return CreateImapMailService(_mailOptions.GmailImap);
         }
-        public IReadMailService CreateImapClient(ImapContext imapContext = null)
+        public IReadMailService CreateImapMailService(ImapContext imapContext = null)
         {
             return new ImapOAuth2MailService(imapContext);
         }

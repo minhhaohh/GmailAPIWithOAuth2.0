@@ -14,7 +14,7 @@ namespace GmailAPIWithOAuth2.Models
 
 		public string Password { get; set; }
 
-		public string ClientID { get; set; }
+		public string ClientId { get; set; }
 
 		public string ClientSecret { get; set; }
 
@@ -24,14 +24,14 @@ namespace GmailAPIWithOAuth2.Models
 		{
 			var smtpClient = new SmtpClient();
 
-			smtpClient.Connect(Host, Port, EnableSsl);
+            smtpClient.Connect(Host, Port, EnableSsl);
 
 			// Define the scope for Gmail
 			var scopes = new[] { "https://mail.google.com/" };
 
 			// Authorize and get credentials
 			var credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-				new ClientSecrets() { ClientId = ClientID, ClientSecret = ClientSecret },
+				new ClientSecrets() { ClientId = ClientId, ClientSecret = ClientSecret },
 				scopes,
 				Username,
 				CancellationToken.None).Result;

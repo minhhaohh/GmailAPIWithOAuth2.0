@@ -4,8 +4,8 @@ namespace GmailAPIWithOAuth2.Services.ReadEmails
 {
     public interface IReadMailServiceFactory
     {
-		IReadMailService Create();
+		IReadMailService CreateReadMailService();
 
-		IReadMailService CreateImapClient(ImapContext imapContext = null);
+		IReadMailService CreateImapMailService(ImapContext imapContext = null);
     }
 }

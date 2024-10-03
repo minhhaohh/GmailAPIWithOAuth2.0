@@ -4,8 +4,10 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
 {
     public interface ISendMailServiceFactory
     {
-        ISendMailService Create();
+        ISendMailService CreateSendMailService();
 
-        ISendMailService CreateSmtpClient(SmtpContext smtpContext = null);
+        ISendMailService CreateSmtpMailService(SmtpContext smtpContext = null);
+
+        ISendMailService CreateFluentMailService();
     }
 }
