@@ -1,4 +1,4 @@
-﻿using FluentEmail.Liquid;
+﻿using Fluid;
 using GmailAPIWithOAuth2.Extentions;
 using GmailAPIWithOAuth2.Models;
 using GmailAPIWithOAuth2.Services.ReadEmails;
@@ -24,16 +24,18 @@ namespace GmailAPIWithOAuth2
                 var sendMailFactory = serviceProvider.GetRequiredService<ISendMailServiceFactory>();
                 var readMailFactory = serviceProvider.GetRequiredService<IReadMailServiceFactory>();
 
-                var gmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestGmailSmtpOptions>>().Value;
-                var gmailSmtpService = sendMailFactory.CreateMailService(gmailSmtpOptions.MailServiceName);
+                //// Using Gmail Smtp
+                //var gmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestGmailSmtpOptions>>().Value;
+                //var gmailSmtpService = sendMailFactory.CreateMailService(gmailSmtpOptions.MailServiceName);
 
-                await gmailSmtpService
-                    .From(gmailSmtpOptions.SenderAddress, gmailSmtpOptions.SenderName)
-                    .To(gmailSmtpOptions.ReceiverAddress, gmailSmtpOptions.ReceiverName)
-                    .Subject(gmailSmtpOptions.Subject)
-                    .Body("Test Gmail Smtp")
-                    .SendAsync();
+                //await gmailSmtpService
+                //    .From(gmailSmtpOptions.SenderAddress, gmailSmtpOptions.SenderName)
+                //    .To(gmailSmtpOptions.ReceiverAddress, gmailSmtpOptions.ReceiverName)
+                //    .Subject(gmailSmtpOptions.Subject)
+                //    .Body("Test Gmail Smtp")
+                //    .SendAsync();
 
+                // Using Gmail Smtp and authenticating with OAuth2.0
                 var oAuth2GmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestOAuth2GmailSmtpOptions>>().Value;
                 var oAuth2GmailSmptService = sendMailFactory.CreateMailService(oAuth2GmailSmtpOptions.MailServiceName);
                 var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Templates", "TestTemplate.liquid");
@@ -55,7 +57,7 @@ namespace GmailAPIWithOAuth2
                     }
                 };
 
-                await oAuth2GmailSmptService
+                var response = await oAuth2GmailSmptService
                     .From(oAuth2GmailSmtpOptions.SenderAddress, oAuth2GmailSmtpOptions.SenderName)
                     .To(oAuth2GmailSmtpOptions.ReceiverAddress, oAuth2GmailSmtpOptions.ReceiverName)
                     .Subject(oAuth2GmailSmtpOptions.Subject)
@@ -63,16 +65,17 @@ namespace GmailAPIWithOAuth2
                     .SendAsync();
 
 
-                var sendGridApiOptions = serviceProvider.GetRequiredService<IOptions<TestSendGridApiOptions>>().Value;
-                var sendGridMailService = sendMailFactory.CreateMailService(sendGridApiOptions.MailServiceName);
+                //// Using Send Grid Api
+                //var sendGridApiOptions = serviceProvider.GetRequiredService<IOptions<TestSendGridApiOptions>>().Value;
+                //var sendGridMailService = sendMailFactory.CreateMailService(sendGridApiOptions.MailServiceName);
 
-                await sendGridMailService
-                    .From(sendGridApiOptions.SenderAddress, sendGridApiOptions.SenderName)
-                    .To(sendGridApiOptions.ReceiverAddress, sendGridApiOptions.ReceiverName)
-                    .Subject(sendGridApiOptions.Subject)
-                    .UsingTemplateFromFile(templatePath, order)
-                    .Body("Test Send Grid Api")
-                    .SendAsync();
+                //await sendGridMailService
+                //    .From(sendGridApiOptions.SenderAddress, sendGridApiOptions.SenderName)
+                //    .To(sendGridApiOptions.ReceiverAddress, sendGridApiOptions.ReceiverName)
+                //    .Subject(sendGridApiOptions.Subject)
+                //    .UsingTemplateFromFile(templatePath, order)
+                //    .Body("Test Send Grid Api")
+                //    .SendAsync();
 
             }
             catch (Exception ex)
@@ -103,7 +106,10 @@ namespace GmailAPIWithOAuth2
 
             // Add Fluent Email
             services.AddFluentEmail(mailOptions.DefaultFromEmail)
-                .AddLiquidRenderer(new LiquidRendererOptions);
+                .AddCustomLiquidRenderer(options =>
+                {
+                    options.TemplateOptions.MemberAccessStrategy = UnsafeMemberAccessStrategy.Instance;
+                });
 
             return services;
         }
