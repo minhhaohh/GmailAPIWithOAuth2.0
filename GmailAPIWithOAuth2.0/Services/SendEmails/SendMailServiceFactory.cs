@@ -27,17 +27,17 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             return serviceName switch
             {
                 MailServiceName.SendGridApi => CreateSendGridMailService(_mailOptions.SendGridApi),
-                MailServiceName.OAuth2GmailSmtp => CreateOAuth2SmtpMailService(_mailOptions.GmailOAuth2Smtp),
+                MailServiceName.OAuth2GmailSmtp => CreateOAuth2SmtpMailService(_mailOptions.OAuth2GmailSmtp),
                 _ => CreateSmtpMailService(_mailOptions.GmailSmtp)
             };
         }
 
-        public IFluentEmail CreateSmtpMailService(SmtpContext smtpContext)
+        public IFluentEmail CreateSmtpMailService(MailingContext context)
         {
-            var smptClient = new SmtpClient(smtpContext.Host, smtpContext.Port)
+            var smptClient = new SmtpClient(context.Host, context.Port)
             {
-                EnableSsl = smtpContext.EnableSsl,
-                Credentials = new NetworkCredential(smtpContext.Username, smtpContext.Password)
+                EnableSsl = context.EnableSsl,
+                Credentials = new NetworkCredential(context.Username, context.Password)
             };
 
             _fluentEmail.Sender = new SmtpSender(smptClient);
@@ -45,7 +45,7 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             return _fluentEmail;
         }
 
-        public IFluentEmail CreateOAuth2SmtpMailService(OAuth2SmtpContext context)
+        public IFluentEmail CreateOAuth2SmtpMailService(MailingContext context)
         {
             _fluentEmail.Sender = new OAuth2MailkitSender(context);
 
@@ -57,7 +57,7 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
             _fluentEmail.Sender = new SendGridSender(apiKey.Value);
 
             // Workaround 
-            _fluentEmail.Tag("string");
+            //_fluentEmail.Tag("string");
 
             return _fluentEmail;
         }

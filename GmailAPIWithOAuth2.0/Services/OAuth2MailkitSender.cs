@@ -12,9 +12,9 @@ namespace GmailAPIWithOAuth2.Services
 {
     public class OAuth2MailkitSender : ISender
     {
-        private readonly OAuth2SmtpContext _context;
+        private readonly MailingContext _context;
 
-        public OAuth2MailkitSender(OAuth2SmtpContext context)
+        public OAuth2MailkitSender(MailingContext context)
         {
             _context = context;
         }

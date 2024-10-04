@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Options;
-using GmailAPIWithOAuth2.Models;
+﻿using GmailAPIWithOAuth2.Models;
+using Microsoft.Extensions.Options;
 
 namespace GmailAPIWithOAuth2.Services.ReadEmails
 {
@@ -16,9 +16,9 @@ namespace GmailAPIWithOAuth2.Services.ReadEmails
         {
             return CreateImapMailService(_mailOptions.GmailImap);
         }
-        public IReadMailService CreateImapMailService(ImapContext imapContext = null)
+        public IReadMailService CreateImapMailService(MailingContext context = null)
         {
-            return new ImapOAuth2MailService(imapContext);
+            return new ImapOAuth2MailService(context);
         }
     }
 }

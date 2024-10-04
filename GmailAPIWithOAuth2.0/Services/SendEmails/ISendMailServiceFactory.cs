@@ -7,9 +7,9 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
     {
         IFluentEmail CreateMailService(string serviceName);
 
-        IFluentEmail CreateSmtpMailService(SmtpContext smtpContext);
+        IFluentEmail CreateSmtpMailService(MailingContext context);
 
-        IFluentEmail CreateOAuth2SmtpMailService(OAuth2SmtpContext context);
+        IFluentEmail CreateOAuth2SmtpMailService(MailingContext context);
 
         IFluentEmail CreateSendGridMailService(ApiKey apiKey);
     }

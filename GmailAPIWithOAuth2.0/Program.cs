@@ -24,16 +24,16 @@ namespace GmailAPIWithOAuth2
                 var sendMailFactory = serviceProvider.GetRequiredService<ISendMailServiceFactory>();
                 var readMailFactory = serviceProvider.GetRequiredService<IReadMailServiceFactory>();
 
-                //// Using Gmail Smtp
-                //var gmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestGmailSmtpOptions>>().Value;
-                //var gmailSmtpService = sendMailFactory.CreateMailService(gmailSmtpOptions.MailServiceName);
+                // Using Gmail Smtp
+                var gmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestGmailSmtpOptions>>().Value;
+                var gmailSmtpService = sendMailFactory.CreateMailService(gmailSmtpOptions.MailServiceName);
 
-                //await gmailSmtpService
-                //    .From(gmailSmtpOptions.SenderAddress, gmailSmtpOptions.SenderName)
-                //    .To(gmailSmtpOptions.ReceiverAddress, gmailSmtpOptions.ReceiverName)
-                //    .Subject(gmailSmtpOptions.Subject)
-                //    .Body("Test Gmail Smtp")
-                //    .SendAsync();
+                await gmailSmtpService
+                    .From(gmailSmtpOptions.SenderAddress, gmailSmtpOptions.SenderName)
+                    .To(gmailSmtpOptions.ReceiverAddress, gmailSmtpOptions.ReceiverName)
+                    .Subject(gmailSmtpOptions.Subject)
+                    .Body("Test Gmail Smtp")
+                    .SendAsync();
 
                 // Using Gmail Smtp and authenticating with OAuth2.0
                 var oAuth2GmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestOAuth2GmailSmtpOptions>>().Value;
@@ -65,17 +65,16 @@ namespace GmailAPIWithOAuth2
                     .SendAsync();
 
 
-                //// Using Send Grid Api
-                //var sendGridApiOptions = serviceProvider.GetRequiredService<IOptions<TestSendGridApiOptions>>().Value;
-                //var sendGridMailService = sendMailFactory.CreateMailService(sendGridApiOptions.MailServiceName);
+                // Using Send Grid Api
+                var sendGridApiOptions = serviceProvider.GetRequiredService<IOptions<TestSendGridApiOptions>>().Value;
+                var sendGridMailService = sendMailFactory.CreateMailService(sendGridApiOptions.MailServiceName);
 
-                //await sendGridMailService
-                //    .From(sendGridApiOptions.SenderAddress, sendGridApiOptions.SenderName)
-                //    .To(sendGridApiOptions.ReceiverAddress, sendGridApiOptions.ReceiverName)
-                //    .Subject(sendGridApiOptions.Subject)
-                //    .UsingTemplateFromFile(templatePath, order)
-                //    .Body("Test Send Grid Api")
-                //    .SendAsync();
+                await sendGridMailService
+                    .From(sendGridApiOptions.SenderAddress, sendGridApiOptions.SenderName)
+                    .To(sendGridApiOptions.ReceiverAddress, sendGridApiOptions.ReceiverName)
+                    .Subject(sendGridApiOptions.Subject)
+                    .Body("Test Send Grid Api")
+                    .SendAsync();
 
             }
             catch (Exception ex)
@@ -106,8 +105,9 @@ namespace GmailAPIWithOAuth2
 
             // Add Fluent Email
             services.AddFluentEmail(mailOptions.DefaultFromEmail)
-                .AddCustomLiquidRenderer(options =>
+                .AddLiquidRenderer(options =>
                 {
+                    // To use with complex model
                     options.TemplateOptions.MemberAccessStrategy = UnsafeMemberAccessStrategy.Instance;
                 });
 

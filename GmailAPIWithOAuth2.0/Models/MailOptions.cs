@@ -4,12 +4,12 @@
 	{
         public string DefaultFromEmail { get; set; }
 
-        public SmtpContext GmailSmtp { get; set; }
+        public MailingContext GmailSmtp { get; set; }
 
-        public OAuth2SmtpContext GmailOAuth2Smtp { get; set; }
+        public MailingContext OAuth2GmailSmtp { get; set; }
 
         public ApiKey SendGridApi { get; set; }
 
-        public ImapContext GmailImap { get; set; }
+        public MailingContext GmailImap { get; set; }
 	}
 }

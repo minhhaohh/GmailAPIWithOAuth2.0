@@ -6,6 +6,6 @@ namespace GmailAPIWithOAuth2.Services.ReadEmails
     {
 		IReadMailService CreateReadMailService();
 
-		IReadMailService CreateImapMailService(ImapContext imapContext = null);
+		IReadMailService CreateImapMailService(MailingContext context = null);
     }
 }

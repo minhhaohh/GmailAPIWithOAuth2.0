@@ -1,19 +1,16 @@
-﻿using MailKit;
+﻿using GmailAPIWithOAuth2.Extentions;
+using GmailAPIWithOAuth2.Models;
+using MailKit;
 using MailKit.Search;
 using MimeKit;
-using GmailAPIWithOAuth2.Models;
-using GmailAPIWithOAuth2.Extentions;
-using MailKit.Net.Imap;
-using Google.Apis.Auth.OAuth2;
-using MailKit.Security;
 
 namespace GmailAPIWithOAuth2.Services.ReadEmails
 {
-	public class ImapOAuth2MailService : IReadMailService
+    public class ImapOAuth2MailService : IReadMailService
 	{
-        ImapContext _context;
+        MailingContext _context;
 
-		public ImapOAuth2MailService(ImapContext context)
+		public ImapOAuth2MailService(MailingContext context)
         {
             _context = context;
         }
