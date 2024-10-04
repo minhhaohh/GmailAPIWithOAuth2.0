@@ -10,6 +10,8 @@
   <ItemGroup>
 	<PackageReference Include="FluentEmail.Liquid" Version="3.0.2" />
 	<PackageReference Include="FluentEmail.MailKit" Version="3.0.2" />
+	<PackageReference Include="FluentEmail.SendGrid" Version="3.0.2" />
+	<PackageReference Include="FluentEmail.Smtp" Version="3.0.2" />
 	<PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="MailKit" Version="4.6.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
@@ -19,6 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="appsettings.mailing.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

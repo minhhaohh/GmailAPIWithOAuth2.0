@@ -2,7 +2,9 @@
 using FluentEmail.Core.Interfaces;
 using FluentEmail.Core.Models;
 using GmailAPIWithOAuth2.Models;
+using Google.Apis.Auth.OAuth2;
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using MimeKit;
 using System.Text;
 
@@ -10,11 +12,11 @@ namespace GmailAPIWithOAuth2.Services
 {
     public class OAuth2MailkitSender : ISender
     {
-        private readonly SmtpContext _smtpContext;
+        private readonly OAuth2SmtpContext _context;
 
-        public OAuth2MailkitSender(SmtpContext smtpContext)
+        public OAuth2MailkitSender(OAuth2SmtpContext context)
         {
-            _smtpContext = smtpContext;
+            _context = context;
         }
 
         public SendResponse Send(IFluentEmail email, CancellationToken? token = null)
@@ -29,7 +31,7 @@ namespace GmailAPIWithOAuth2.Services
 
             try
             {
-                using SmtpClient client = _smtpContext.CreateSmtpClient();
+                using SmtpClient client = CreateOAuthSmtpClient();
 
                 client.Send(message, token.GetValueOrDefault());
                 client.Disconnect(quit: true, token.GetValueOrDefault());
@@ -54,7 +56,7 @@ namespace GmailAPIWithOAuth2.Services
 
             try
             {
-                using SmtpClient client = _smtpContext.CreateSmtpClient();
+                using SmtpClient client = CreateOAuthSmtpClient();
 
                 await client.SendAsync(message, token.GetValueOrDefault());
                 await client.DisconnectAsync(quit: true, token.GetValueOrDefault());
@@ -65,25 +67,6 @@ namespace GmailAPIWithOAuth2.Services
             }
 
             return response;
-        }
-
-        private async Task SaveToPickupDirectory(MimeMessage message, string pickupDirectory)
-        {
-            string path = Path.Combine(pickupDirectory, Guid.NewGuid().ToString() + ".eml");
-            if (File.Exists(path))
-            {
-                return;
-            }
-
-            try
-            {
-                using FileStream stream = new FileStream(path, FileMode.CreateNew);
-                await message.WriteToAsync(stream);
-            }
-            catch (IOException)
-            {
-                throw;
-            }
         }
 
         private MimeMessage CreateMailMessage(IFluentEmail email)
@@ -157,6 +140,35 @@ namespace GmailAPIWithOAuth2.Services
             }
 
             return message;
+        }
+
+        public SmtpClient CreateOAuthSmtpClient()
+        {
+            var smtpClient = new SmtpClient();
+
+            smtpClient.Connect(_context.Host, _context.Port, _context.EnableSsl);
+
+            // Define the scope for Gmail
+            var scopes = new[] { "https://mail.google.com/" };
+
+            // Authorize and get credentials
+            var credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
+                new ClientSecrets() { ClientId = _context.ClientId, ClientSecret = _context.ClientSecret },
+                scopes,
+                _context.Username,
+                CancellationToken.None).Result;
+
+            // Check if access token is expired and refresh if necessary
+            if (credential.Token.IsStale)
+            {
+                credential.RefreshTokenAsync(CancellationToken.None).Wait();
+            }
+
+            // Create an OAuth2 authentication mechanism using the email address and the access token obtained from the Google credentials.
+            var oauth2 = new SaslMechanismOAuth2(_context.Username, credential.Token.AccessToken);
+            smtpClient.Authenticate(oauth2);
+
+            return smtpClient;
         }
     }
 }

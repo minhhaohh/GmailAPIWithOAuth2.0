@@ -1,13 +1,16 @@
-﻿using GmailAPIWithOAuth2.Models;
+﻿using FluentEmail.Core;
+using GmailAPIWithOAuth2.Models;
 
 namespace GmailAPIWithOAuth2.Services.SendEmails
 {
     public interface ISendMailServiceFactory
     {
-        ISendMailService CreateSendMailService();
+        IFluentEmail CreateMailService(string serviceName);
 
-        ISendMailService CreateSmtpMailService(SmtpContext smtpContext = null);
+        IFluentEmail CreateSmtpMailService(SmtpContext smtpContext);
 
-        ISendMailService CreateFluentMailService();
+        IFluentEmail CreateOAuth2SmtpMailService(OAuth2SmtpContext context);
+
+        IFluentEmail CreateSendGridMailService(ApiKey apiKey);
     }
 }

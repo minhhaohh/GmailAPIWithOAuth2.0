@@ -1,70 +1,111 @@
-﻿using GmailAPIWithOAuth2.Extentions;
+﻿using FluentEmail.Liquid;
+using GmailAPIWithOAuth2.Extentions;
 using GmailAPIWithOAuth2.Models;
 using GmailAPIWithOAuth2.Services.ReadEmails;
 using GmailAPIWithOAuth2.Services.SendEmails;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace GmailAPIWithOAuth2
 {
-	class Program
-	{
-		public static IConfiguration Configuration;
+    class Program
+    {
+        public static IConfiguration Configuration;
 
-		private static async Task Main(string[] args)
-		{
-			var services = ConfigureServices();
+        private static async Task Main(string[] args)
+        {
+            var services = ConfigureServices();
 
-			try
-			{
-				var serviceProvider = services.BuildServiceProvider();
-				var sendMailFactory = serviceProvider.GetRequiredService<ISendMailServiceFactory>();
-				var readMailFactory = serviceProvider.GetRequiredService<IReadMailServiceFactory>();
+            try
+            {
+                var serviceProvider = services.BuildServiceProvider();
 
-				var sendMailService = sendMailFactory.CreateSendMailService();
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Templates", "TestTemplate.liquid");
-                var model = new Person()
+                var sendMailFactory = serviceProvider.GetRequiredService<ISendMailServiceFactory>();
+                var readMailFactory = serviceProvider.GetRequiredService<IReadMailServiceFactory>();
+
+                var gmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestGmailSmtpOptions>>().Value;
+                var gmailSmtpService = sendMailFactory.CreateMailService(gmailSmtpOptions.MailServiceName);
+
+                await gmailSmtpService
+                    .From(gmailSmtpOptions.SenderAddress, gmailSmtpOptions.SenderName)
+                    .To(gmailSmtpOptions.ReceiverAddress, gmailSmtpOptions.ReceiverName)
+                    .Subject(gmailSmtpOptions.Subject)
+                    .Body("Test Gmail Smtp")
+                    .SendAsync();
+
+                var oAuth2GmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestOAuth2GmailSmtpOptions>>().Value;
+                var oAuth2GmailSmptService = sendMailFactory.CreateMailService(oAuth2GmailSmtpOptions.MailServiceName);
+                var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Templates", "TestTemplate.liquid");
+                var order = new Order
                 {
-                    Name = "Hao Tran",
-                    Dob = new DateTime(2000, 12, 4),
-                    Gender = "Male",
-                    Address = "Ho Chi Minh city"
+                    OrderNumber = oAuth2GmailSmtpOptions.MailServiceName,
+                    Customer = new Person()
+                    {
+                        Name = "Hao Tran",
+                        Dob = new DateTime(2000, 12, 4),
+                        Gender = "Male",
+                        Address = "Ho Chi Minh city"
+                    },
+                    Products = new List<Product>
+                    {
+                        new Product { Name = "Laptop", Price = 999.99m, Quantity = 1 },
+                        new Product { Name = "Mouse", Price = 49.99m, Quantity = 2 },
+                        new Product { Name = "Keyboard", Price = 79.99m, Quantity = 1 }
+                    }
                 };
-                await sendMailService.New()
-					.From("haotrandevsoft@gmail.com", "Hao Tran")
-					.To("hao.tran@devsoft.vn", "Minh Hao")
-					.Subject("TEST EMAIL SUBJECT")
-					.UsingTemplateFromFile(filePath, model)
-					.SendAsync();
 
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine("Error: " + ex.Message);
-			}
-		}
+                await oAuth2GmailSmptService
+                    .From(oAuth2GmailSmtpOptions.SenderAddress, oAuth2GmailSmtpOptions.SenderName)
+                    .To(oAuth2GmailSmtpOptions.ReceiverAddress, oAuth2GmailSmtpOptions.ReceiverName)
+                    .Subject(oAuth2GmailSmtpOptions.Subject)
+                    .UsingTemplateFromFile(templatePath, order)
+                    .SendAsync();
 
-		private static ServiceCollection ConfigureServices()
-		{
-			Configuration = new ConfigurationBuilder()
-				.AddJsonFile("appsettings.mailing.json", false)
-				.Build();
 
-			var services = new ServiceCollection();
+                var sendGridApiOptions = serviceProvider.GetRequiredService<IOptions<TestSendGridApiOptions>>().Value;
+                var sendGridMailService = sendMailFactory.CreateMailService(sendGridApiOptions.MailServiceName);
 
-			services.Configure<MailOptions>(Configuration.GetSection(nameof(MailOptions)));
+                await sendGridMailService
+                    .From(sendGridApiOptions.SenderAddress, sendGridApiOptions.SenderName)
+                    .To(sendGridApiOptions.ReceiverAddress, sendGridApiOptions.ReceiverName)
+                    .Subject(sendGridApiOptions.Subject)
+                    .UsingTemplateFromFile(templatePath, order)
+                    .Body("Test Send Grid Api")
+                    .SendAsync();
 
-			services.AddSingleton<ISendMailServiceFactory, SendMailServiceFactory>();
-			services.AddSingleton<IReadMailServiceFactory, ReadMailServiceFactory>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+        }
 
-			var mailOptions = Configuration.GetSection(nameof(MailOptions)).Get<MailOptions>();
+        private static ServiceCollection ConfigureServices()
+        {
+            Configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", false)
+                .AddJsonFile("appsettings.mailing.json", false)
+                .Build();
+
+            var services = new ServiceCollection();
+
+            services.Configure<MailOptions>(Configuration.GetSection(nameof(MailOptions)));
+
+            services.Configure<TestGmailSmtpOptions>(Configuration.GetSection(nameof(TestGmailSmtpOptions)));
+            services.Configure<TestOAuth2GmailSmtpOptions>(Configuration.GetSection(nameof(TestOAuth2GmailSmtpOptions)));
+            services.Configure<TestSendGridApiOptions>(Configuration.GetSection(nameof(TestSendGridApiOptions)));
+
+            services.AddSingleton<ISendMailServiceFactory, SendMailServiceFactory>();
+            services.AddSingleton<IReadMailServiceFactory, ReadMailServiceFactory>();
+
+            var mailOptions = Configuration.GetSection(nameof(MailOptions)).Get<MailOptions>();
 
             // Add Fluent Email
-            services.AddFluentEmail(mailOptions.GmailSmtp.Username)
-				.AddOAuth2MailKitSender(mailOptions.GmailSmtp)
-				.AddLiquidRenderer();
+            services.AddFluentEmail(mailOptions.DefaultFromEmail)
+                .AddLiquidRenderer(new LiquidRendererOptions);
 
-			return services;
-		}
-	}
+            return services;
+        }
+    }
 }

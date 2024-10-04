@@ -1,7 +1,11 @@
-﻿using Microsoft.Extensions.Options;
+﻿using FluentEmail.Core;
+using FluentEmail.SendGrid;
+using FluentEmail.Smtp;
+using GmailAPIWithOAuth2.Constants;
 using GmailAPIWithOAuth2.Models;
-using FluentEmail.Core;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using System.Net;
+using System.Net.Mail;
 
 namespace GmailAPIWithOAuth2.Services.SendEmails
 {
@@ -11,28 +15,51 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
         private readonly IFluentEmail _fluentEmail;
 
         public SendMailServiceFactory(
-            IOptions<MailOptions> mailOptions,
-            IServiceProvider serviceProvider)
+            IOptions<MailOptions> mailOptions, 
+            IFluentEmail fluentEmail)
         {
             _mailOptions = mailOptions.Value;
-            _fluentEmail = serviceProvider.GetService<IFluentEmail>();
+            _fluentEmail = fluentEmail;
         }
 
-        public ISendMailService CreateSendMailService()
+        public IFluentEmail CreateMailService(string serviceName)
         {
-            return _fluentEmail == null
-                ? CreateSmtpMailService(_mailOptions.GmailSmtp)
-                : CreateFluentMailService();
+            return serviceName switch
+            {
+                MailServiceName.SendGridApi => CreateSendGridMailService(_mailOptions.SendGridApi),
+                MailServiceName.OAuth2GmailSmtp => CreateOAuth2SmtpMailService(_mailOptions.GmailOAuth2Smtp),
+                _ => CreateSmtpMailService(_mailOptions.GmailSmtp)
+            };
         }
 
-        public ISendMailService CreateSmtpMailService(SmtpContext smtpContext = null)
+        public IFluentEmail CreateSmtpMailService(SmtpContext smtpContext)
         {
-            return new SmtpOAuth2MailService(smtpContext);
+            var smptClient = new SmtpClient(smtpContext.Host, smtpContext.Port)
+            {
+                EnableSsl = smtpContext.EnableSsl,
+                Credentials = new NetworkCredential(smtpContext.Username, smtpContext.Password)
+            };
+
+            _fluentEmail.Sender = new SmtpSender(smptClient);
+
+            return _fluentEmail;
         }
 
-        public ISendMailService CreateFluentMailService()
+        public IFluentEmail CreateOAuth2SmtpMailService(OAuth2SmtpContext context)
         {
-            return new FluentMailService(_fluentEmail);
+            _fluentEmail.Sender = new OAuth2MailkitSender(context);
+
+            return _fluentEmail;
+        }
+
+        public IFluentEmail CreateSendGridMailService(ApiKey apiKey)
+        {
+            _fluentEmail.Sender = new SendGridSender(apiKey.Value);
+
+            // Workaround 
+            _fluentEmail.Tag("string");
+
+            return _fluentEmail;
         }
     }
 }

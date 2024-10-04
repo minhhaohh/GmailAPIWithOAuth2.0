@@ -2,8 +2,14 @@
 {
 	public class MailOptions
 	{
-		public SmtpContext GmailSmtp { get; set; }
+        public string DefaultFromEmail { get; set; }
 
-		public ImapContext GmailImap { get; set; }
+        public SmtpContext GmailSmtp { get; set; }
+
+        public OAuth2SmtpContext GmailOAuth2Smtp { get; set; }
+
+        public ApiKey SendGridApi { get; set; }
+
+        public ImapContext GmailImap { get; set; }
 	}
 }
