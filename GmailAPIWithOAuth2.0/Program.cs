@@ -1,4 +1,5 @@
-﻿using Fluid;
+﻿using FluentEmail.Core.Models;
+using Fluid;
 using GmailAPIWithOAuth2.Extentions;
 using GmailAPIWithOAuth2.Models;
 using GmailAPIWithOAuth2.Services.ReadEmails;
@@ -6,6 +7,8 @@ using GmailAPIWithOAuth2.Services.SendEmails;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace GmailAPIWithOAuth2
 {
@@ -24,16 +27,16 @@ namespace GmailAPIWithOAuth2
                 var sendMailFactory = serviceProvider.GetRequiredService<ISendMailServiceFactory>();
                 var readMailFactory = serviceProvider.GetRequiredService<IReadMailServiceFactory>();
 
-                // Using Gmail Smtp
-                var gmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestGmailSmtpOptions>>().Value;
-                var gmailSmtpService = sendMailFactory.CreateMailService(gmailSmtpOptions.MailServiceName);
+                //// Using Gmail Smtp
+                //var gmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestGmailSmtpOptions>>().Value;
+                //var gmailSmtpService = sendMailFactory.CreateMailService(gmailSmtpOptions.MailServiceName);
 
-                await gmailSmtpService
-                    .From(gmailSmtpOptions.SenderAddress, gmailSmtpOptions.SenderName)
-                    .To(gmailSmtpOptions.ReceiverAddress, gmailSmtpOptions.ReceiverName)
-                    .Subject(gmailSmtpOptions.Subject)
-                    .Body("Test Gmail Smtp")
-                    .SendAsync();
+                //await gmailSmtpService
+                //    .From(gmailSmtpOptions.SenderAddress, gmailSmtpOptions.SenderName)
+                //    .To(gmailSmtpOptions.ReceiverAddress, gmailSmtpOptions.ReceiverName)
+                //    .Subject(gmailSmtpOptions.Subject)
+                //    .Body("Test Gmail Smtp")
+                //    .SendAsync();
 
                 // Using Gmail Smtp and authenticating with OAuth2.0
                 var oAuth2GmailSmtpOptions = serviceProvider.GetRequiredService<IOptions<TestOAuth2GmailSmtpOptions>>().Value;
@@ -57,24 +60,34 @@ namespace GmailAPIWithOAuth2
                     }
                 };
 
+                var filePath = "D:\\MediaFiles\\12.png";
+                var attachFile = new Attachment()
+                {
+                    IsInline = true,
+                    Data = File.OpenRead(filePath),
+                    ContentType = "application/octet-stream",
+                    Filename = Path.GetFileName(filePath)
+                };
+
                 var response = await oAuth2GmailSmptService
                     .From(oAuth2GmailSmtpOptions.SenderAddress, oAuth2GmailSmtpOptions.SenderName)
                     .To(oAuth2GmailSmtpOptions.ReceiverAddress, oAuth2GmailSmtpOptions.ReceiverName)
                     .Subject(oAuth2GmailSmtpOptions.Subject)
                     .UsingTemplateFromFile(templatePath, order)
+                    .Attach(attachFile)
                     .SendAsync();
 
 
-                // Using Send Grid Api
-                var sendGridApiOptions = serviceProvider.GetRequiredService<IOptions<TestSendGridApiOptions>>().Value;
-                var sendGridMailService = sendMailFactory.CreateMailService(sendGridApiOptions.MailServiceName);
+                //// Using Send Grid Api
+                //var sendGridApiOptions = serviceProvider.GetRequiredService<IOptions<TestSendGridApiOptions>>().Value;
+                //var sendGridMailService = sendMailFactory.CreateMailService(sendGridApiOptions.MailServiceName);
 
-                await sendGridMailService
-                    .From(sendGridApiOptions.SenderAddress, sendGridApiOptions.SenderName)
-                    .To(sendGridApiOptions.ReceiverAddress, sendGridApiOptions.ReceiverName)
-                    .Subject(sendGridApiOptions.Subject)
-                    .Body("Test Send Grid Api")
-                    .SendAsync();
+                //await sendGridMailService
+                //    .From(sendGridApiOptions.SenderAddress, sendGridApiOptions.SenderName)
+                //    .To(sendGridApiOptions.ReceiverAddress, sendGridApiOptions.ReceiverName)
+                //    .Subject(sendGridApiOptions.Subject)
+                //    .Body("Test Send Grid Api")
+                //    .SendAsync();
 
             }
             catch (Exception ex)
@@ -112,6 +125,18 @@ namespace GmailAPIWithOAuth2
                 });
 
             return services;
+        }
+
+        private static async Task TestSendGoogleNotificationAsync()
+        {
+            var webhookUrl = "";
+            var message = "Test Notification";
+            var content = new StringContent(JsonConvert.SerializeObject(new { text = message }), Encoding.UTF8, "application/json");
+
+            using (var client = new HttpClient())
+            {
+                var response = await client.PostAsync(webhookUrl, content);
+            }
         }
     }
 }

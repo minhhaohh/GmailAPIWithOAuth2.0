@@ -2,10 +2,9 @@
 using FluentEmail.SendGrid;
 using FluentEmail.Smtp;
 using GmailAPIWithOAuth2.Constants;
+using GmailAPIWithOAuth2.Extentions;
 using GmailAPIWithOAuth2.Models;
 using Microsoft.Extensions.Options;
-using System.Net;
-using System.Net.Mail;
 
 namespace GmailAPIWithOAuth2.Services.SendEmails
 {
@@ -34,11 +33,7 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
 
         public IFluentEmail CreateSmtpMailService(MailingContext context)
         {
-            var smptClient = new SmtpClient(context.Host, context.Port)
-            {
-                EnableSsl = context.EnableSsl,
-                Credentials = new NetworkCredential(context.Username, context.Password)
-            };
+            var smptClient = context.CreateSmtpClient();
 
             _fluentEmail.Sender = new SmtpSender(smptClient);
 
@@ -55,9 +50,6 @@ namespace GmailAPIWithOAuth2.Services.SendEmails
         public IFluentEmail CreateSendGridMailService(ApiKey apiKey)
         {
             _fluentEmail.Sender = new SendGridSender(apiKey.Value);
-
-            // Workaround 
-            //_fluentEmail.Tag("string");
 
             return _fluentEmail;
         }
